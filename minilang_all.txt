@@ -1,0 +1,294 @@
+MINILANG -- LANGUAGE FEATURE REFERENCE, EXAMPLES, AND BAD EXAMPLES
+====================================================================
+Every snippet below was actually run through the interpreter; the
+"output" lines are the real printed output, not made up.
+
+
+PART 1: LANGUAGE FEATURES
+====================================================================
+
+1. COMMENTS
+--------------------------------------------------------------------
+'#' starts a comment that runs to the end of the line.
+
+    # this line is ignored
+    print 1
+
+    output: 1
+
+
+2. VARIABLES & ASSIGNMENT
+--------------------------------------------------------------------
+Variables hold integers. No declaration needed; `x = expr` both
+creates and updates a variable.
+
+    x = 5
+    print x
+
+    output: 5
+
+
+3. ARITHMETIC OPERATORS:  +  -  *  /  %
+--------------------------------------------------------------------
+Standard precedence (* / % bind tighter than + -). Integer division
+and modulo truncate toward zero (like C, not like Python's floor //).
+
+    print 2 + 3 * 4 - 1     # * before + and -
+    print 7 / 2             # integer division -> 3
+    print 7 % 2             # remainder       -> 1
+
+    output: 13
+            3
+            1
+
+
+4. UNARY MINUS
+--------------------------------------------------------------------
+    x = 5
+    print -x
+
+    output: -5
+
+
+5. PARENTHESES (override precedence)
+--------------------------------------------------------------------
+    print (2 + 3) * 4
+
+    output: 20
+
+
+6. COMPARISON OPERATORS:  <  >  <=  >=  ==  !=
+--------------------------------------------------------------------
+Comparisons are expressions too -- they evaluate to 1 (true) or 0
+(false), which can be printed, stored, or used as an if/while
+condition.
+
+    print 3 < 5
+    print 3 > 5
+    print 3 == 3
+    print 3 != 3
+    print 3 <= 3
+    print 3 >= 4
+
+    output: 1
+            0
+            1
+            0
+            1
+            0
+
+
+7. PRINT STATEMENT
+--------------------------------------------------------------------
+    print <any expression>
+
+Prints the evaluated integer value on its own line. Already shown
+in every example above.
+
+
+8. IF / ELSE
+--------------------------------------------------------------------
+`else` is optional. Any nonzero condition is treated as true.
+
+    x = 10
+    if x > 5 {
+      print 1
+    } else {
+      print 0
+    }
+
+    output: 1
+
+    x = 2
+    if x == 2 {
+      print 99
+    }
+
+    output: 99
+
+
+9. WHILE LOOP
+--------------------------------------------------------------------
+    i = 0
+    while i < 5 {
+      print i
+      i = i + 1
+    }
+
+    output: 0
+            1
+            2
+            3
+            4
+
+
+10. NESTED LOOPS / CONDITIONALS
+--------------------------------------------------------------------
+Blocks can contain any statements, including more if/while, so
+loops nest freely (this is how primes.ml and factorial.ml work).
+
+    i = 1
+    while i <= 3 {
+      j = 1
+      while j <= 3 {
+        print i * j
+        j = j + 1
+      }
+      i = i + 1
+    }
+
+    output: 1
+            2
+            3
+            2
+            4
+            6
+            3
+            6
+            9
+
+
+11. STATEMENT SEPARATION
+--------------------------------------------------------------------
+Statements are separated by newlines (not semicolons). Blank lines
+and comment-only lines between statements are fine and are ignored.
+
+
+12. '+' IS COMPUTED BY A REAL TURING MACHINE
+--------------------------------------------------------------------
+This is ordinary MiniLang syntax -- no special function, no new
+keyword. `x + y` anywhere in a program is evaluated by lang.py's
+tm_add(), which converts x and y to binary, builds a tape "x_bits
++y_bits", and actually runs turing.py's binary_addition Turing
+machine on it to completion; the result is whatever digits are left
+on that machine's tape when it halts. (Falls back to plain Python
+addition only when an operand is negative -- binary_addition's
+transition table, like a real single-tape adder, has no sign
+handling.) `-`, `*`, `/`, `%` are still ordinary Python arithmetic;
+only `+` is Turing-machine-backed.
+
+    i = 0
+    total = 0
+    while i < 5 {
+        total = total + i
+        print total
+        i = i + 1
+    }
+
+    output: 0
+            1
+            3
+            6
+            10
+
+Every one of those ten `+` evaluations (five for `total = total + i`,
+five for `i = i + 1`) independently built a tape and ran the real
+binary_addition machine to completion -- this is a normal loop, with
+no special syntax, and the arithmetic inside it is genuinely computed
+by the Turing machine simulator, not Python's `+` operator.
+
+
+PART 2: EXAMPLE PROGRAMS (run correctly)
+====================================================================
+
+----- examples/factorial.ml -----
+Computes 5! by repeated multiplication.
+
+    # 5! by repeated multiplication -> 120
+    n = 5
+    result = 1
+    i = 1
+    while i <= n {
+        result = result * i
+        i = i + 1
+    }
+    print result
+
+    output: 120
+
+
+----- examples/fibonacci.ml -----
+Prints the first 10 Fibonacci numbers.
+
+    # first 10 Fibonacci numbers
+    n = 10
+    a = 0
+    b = 1
+    i = 0
+    while i < n {
+        print a
+        temp = a + b
+        a = b
+        b = temp
+        i = i + 1
+    }
+
+    output: 0 1 1 2 3 5 8 13 21 34   (one per line)
+
+
+----- examples/primes.ml -----
+Prints all primes up to 30 by trial division.
+
+    # primes up to 30 by trial division
+    limit = 30
+    n = 2
+    while n <= limit {
+        is_prime = 1
+        d = 2
+        while d * d <= n {
+            if n % d == 0 {
+                is_prime = 0
+            }
+            d = d + 1
+        }
+        if is_prime == 1 {
+            print n
+        }
+        n = n + 1
+    }
+
+    output: 2 3 5 7 11 13 17 19 23 29   (one per line)
+
+
+----- examples/gcd.ml -----
+Euclid's algorithm.
+
+    # Euclid's algorithm -> 6
+    a = 48
+    b = 18
+    while b != 0 {
+        t = b
+        b = a % b
+        a = t
+    }
+    print a
+
+    output: 6
+
+
+PART 3: BAD EXAMPLES (intentionally fail)
+====================================================================
+
+----- examples/bad_token.ml -----
+'@' is not part of any token rule -> tokenizer error (LangError).
+
+    # '@' is not in any token rule -> tokenizer error
+    x = 5
+    y = 10
+    z = x @ y
+    print z
+
+    error: unexpected character '@' at line 4, col 7
+
+
+----- examples/bad_syntax.ml -----
+Unary '+' is not in the grammar (only unary '-' is supported) ->
+SyntaxError (LangError) at parse time.
+
+    # unary '+' is not in the grammar -> SyntaxError
+    x = 5
+    y = +
+    print y
+
+    error: expected a number, identifier or '(' but found PLUS ('+')
+           at line 3, col 5
