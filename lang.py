@@ -178,7 +178,11 @@ def tm_add(a, b):
     transition table, like a real single-tape adder, has no sign handling."""
     if a < 0 or b < 0:
         return a + b
-    tape = TuringMachine("binary_addition", f"{bin(a)[2:]}+{bin(b)[2:]}").run(show=False)[3]
+    if a < b:                      # the machine counts B down to zero, so give it the smaller one
+        a, b = b, a
+    verdict, _, _, tape = TuringMachine("binary_addition", f"{bin(a)[2:]}+{bin(b)[2:]}").run(show=False)
+    if verdict != "ACCEPTED":
+        raise LangError(f"addition of {a} and {b} did not finish within the Turing machine step limit")
     return int(tape, 2) if tape else 0
 
 
